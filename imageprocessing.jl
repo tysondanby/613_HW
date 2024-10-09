@@ -192,6 +192,28 @@ function medianfilter!(img,filtersize)
     return img
 end
 
+function medianfilter!(img,filtersize,weight)
+    R,C = size(img)
+    extensions = (filtersize-1)/2
+    refimg = img
+    for i = 1:1:extensions
+        refimg = extend(refimg)
+    end
+    
+    for  r = 1:1:R
+        for c = 1:1:C
+            masked = []
+            for fr = 1:1:(filtersize)
+                for fc = 1:1:(filtersize)
+                    push!(masked,refimg[r+fr-1,c+fc-1])
+                end
+            end
+            img[r,c] = weight*median(masked) + (1-weight)*img[r,c] 
+        end
+    end
+    return img
+end
+
 function centeringfilter!(img,filtersize)
     R,C = size(img)
     extensions = (filtersize-1)/2
@@ -214,4 +236,37 @@ function centeringfilter!(img,filtersize)
         end
     end
     return img
+end
+
+function rmblackobjects(img,bounds)#removes objects outside of bounds
+    xboundmin,xboundmax=bounds[1]
+    yboundmin,yboundmax=bounds[2]
+    R,C = size(img)
+    newimg = deepcopy(img)
+    for i =1:1:R
+        for j = 1:1:C
+            if  (i >= yboundmin) && (i <= yboundmax) && (j >= xboundmin) && (j <= xboundmax) 
+            else
+                newimg[i,j] = 0
+            end
+        end
+    end
+    return newimg
+end
+
+function blackcentroid(img)
+    pixels::Int64 = 0
+    weight = (0.0 , 0.0)
+    R,C = size(img)
+    for x = 1:1:C
+        for y = 1:1:R
+            if img[y,x] < 0.5
+                pixels = pixels +1
+                weight = (weight[1] + x, weight[2] + y)
+            end
+        end
+    end
+    cx = weight[1]/pixels
+    cy = weight[2]/pixels
+    return cx,cy
 end
